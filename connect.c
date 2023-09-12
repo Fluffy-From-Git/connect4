@@ -27,8 +27,8 @@ typedef struct gameState {
     BoardCell **board;
     enum Player player1;
     enum Player player2;
+    enum Player turn;
     int chipCount;
-    int turn;
 } GameState;
 
 BoardCell **generateBoard(void) {
@@ -131,10 +131,19 @@ bool checkDiagWin(BoardCell **board, int row, int col, int player) {
     return count1 >= 4 || count2 >= 4;
 }
 
-bool checkWin(BoardCell **board, int row, int col, int player) {
-    return checkRowWin(board, row, col, player) ||
-           checkColWin(board, row, col, player) ||
-           checkDiagWin(board, row, col, player);
+bool checkWin(GameState *game, int row, int col, enum Player player) {
+    int playerposition = 0;
+    if (player == game->player1) {
+        playerposition = 1;
+    } else if (player == game->player2) {
+        playerposition = 2;
+    } else {
+        printf("Invalid player\n");
+        return false;
+    }
+    return checkRowWin(game->board, row, col, playerposition) ||
+           checkColWin(game->board, row, col, playerposition) ||
+           checkDiagWin(game->board, row, col, playerposition);
 }
 
 
@@ -148,18 +157,17 @@ int makeMove(GameState *game, enum Player player, int col) {
         printf("Invalid player\n");
         return -1;
     }
-    if (col >= COLS || col < 0 && player != BOT) {
-        printf("Invalid move\n");
+    if (col >= COLS || col < 0){
         return -1;
     }
     for (int i = ROWS - 1; i >= 0; i--) {
         if(game->board[i][col].player == 0) {
             game->board[i][col].player = playerposition;
+            game->board[i][col].chip = (player == 1) ? BLUE : RED;
+            game->chipCount++;
             printBoard(game->board);
+            return i;
         }
-    }
-    if(player != BOT) {
-        printf("Invalid move\n");
     }
     return -1;
 }
@@ -201,39 +209,73 @@ GameState *createGameState(void) {
     return game;
 }
 
-bool playGame(GameState *game) {
-
+bool playGame(GameState **game) {
+    if((*game)->turn == BOT) {
+        printf("Bots turn!\n");
+        int col = (((time(NULL)+rand())/1)% COLS);
+        int row = makeMove(*game, (*game)->turn, col);
+        while(row == -1) {
+            col = (((time(NULL)+rand())/1)% COLS);
+            row = makeMove(*game, (*game)->turn, col);
+        };
+        if((*game)->chipCount >= 7 && checkWin(*game, row, col, (*game)->turn)) {
+            printf("Bot wins!\n");
+            return false;
+        }
+        if((*game)->chipCount == ROWS * COLS) {
+            printf("Draw!\n");
+            return false;
+        }
+        (*game)->turn = PLAYER;
+    } else if ((*game)->turn == PLAYER) {
+        printf("Player turn!\n"
+            "Enter col: ");
+        int col;
+        while(scanf(" %d", &col) != EOF) {
+            int row = makeMove(*game, (*game)->turn, col);
+            if (row != -1) {
+                if((*game)->chipCount >= 7 && checkWin((*game), row, col, (*game)->turn)) {
+                    printf("Player wins!\n");
+                    return false;
+                }
+                if((*game)->chipCount == ROWS * COLS) {
+                    printf("Draw!\n");
+                    return false;
+                }
+                (*game)->turn = BOT;
+                break;
+            } else {
+                printf("Invalid move\nEnter col: ");
+            }
+        }
+    } else {
+        printf("Player %d turn!"
+            "\nEnter col: ", (*game)->turn);
+        int col;
+        while(scanf(" %d", &col) != EOF) {
+            int row = makeMove((*game), (*game)->turn, col);
+            if (row != -1) {
+                if((*game)->chipCount >= 7 && checkWin((*game), row, col, (*game)->turn)) {
+                    printf("Player %d wins!\n", (*game)->turn);
+                    return false;
+                }
+                if((*game)->chipCount == ROWS * COLS) {
+                    printf("Draw!\n");
+                    return false;
+                }
+                (*game)->turn = ((*game)->turn == (*game)->player1) ? (*game)->player2 : (*game)->player1;
+                break;
+            } else {
+                printf("Invalid move\nEnter col: ");
+            }
+        }
+    }
+    return true;
 }
 int main(void) {
     GameState *game = createGameState();
-
-    while (playGame(game)) {
+    while (playGame(&game)) {
         // playGame(game);
-    }
-    if (game->player1 == BOT) {
-        printf("Bots turn!\n");
-        while(makeMove(game->board, bot, (((time(NULL)+rand())/1)% COLS)) == -1) {
-        };
-    } 
-    printf("Player %d turn!"
-        "\nEnter row: ", player);
-    int col;
-    while(scanf("%d", &col) != EOF) {
-        int row = makeMove(board, player, col);
-        if (row != -1) {
-            chipCount++;
-            if(chipCount >= 7 && checkWin(board, row, col, player)) {
-                printf("Player %d wins!\n", player);
-                return 0;
-            }
-            if(chipCount == ROWS * COLS) {
-                printf("Draw!\n");
-                return 0;
-            }
-            player = (player == 1) ? 2 : 1;
-        }
-        printf("Player %d turn!"
-               "\nEnter row: ", player);
     }
     return 0;
 }
