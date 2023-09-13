@@ -159,7 +159,7 @@ ValidPosition *newPosition(int col);
 void insertPosition(GameState *game, int row, int col);
 
 // Generates an array of all valid positions
-ValidPosition **generateValidPositions(GameState *game);
+void generateValidPositions(GameState *game);
 
 // Sets up the game state for a bot
 void botSetUp(GameState *game);

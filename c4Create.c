@@ -80,15 +80,15 @@ void insertPosition(GameState *game, int row, int col) {
 }
 
 
-ValidPosition **generateValidPositions(GameState *game) {
-    ValidPosition **validPositions = malloc(ROWS * sizeof(ValidPosition));
+void generateValidPositions(GameState *game) {
+    game->validPositions = malloc(ROWS * sizeof(ValidPosition));
     for (int i = 0; i < ROWS; i++) {
-        validPositions[i] = NULL;
+        game->validPositions[i] = NULL;
         for(int j = COLS - 1; j >= 0; j--) {
             insertPosition(game, i, j);
         }
     }
-    return validPositions;
+    return;
 }
 
 void botSetUp(GameState *game) {
@@ -115,7 +115,7 @@ GameState *createGameState(void) {
     GameState *game = malloc(sizeof(GameState));
     game->board = generateBoard();
     game->chipCount = 0;
-    game->validPositions = generateValidPositions(game);
+    generateValidPositions(game);
     printf("Play against bot? (Y/N): ");
     char c;
     while(scanf(" %c", &c) != EOF) {

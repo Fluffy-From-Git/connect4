@@ -120,8 +120,6 @@ int makeMove(GameState *game, enum Player player, int col) {
     return -1;
 }
 
-
-
 void removeValidPosition(GameState *game, int row, int col) {
     ValidPosition *position = game->validPositions[row];
     if (position == NULL) {
